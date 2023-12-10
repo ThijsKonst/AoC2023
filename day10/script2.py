@@ -1,10 +1,13 @@
-lines = open('testInput.txt', 'r').read().split()
-originalLocation = next((index, x.find('S')) for index, x in enumerate(lines) if "S" in x)
-currentLocation = originalLocation
+import sys
+
+sys.setrecursionlimit(100000)
+
+lines = open('input.txt', 'r').read().split()
+
 paddedMaze = []
 
+
 paddingConversion = {
-    # (north, east, south, west)
     "|": ["A|A", "A|A", "A|A"],
     "-": ["AAA", "---", "AAA"],
     "L": ["A|A", "AL-", "AAA"],
@@ -12,19 +15,8 @@ paddingConversion = {
     "7": ["AAA", "-7A", "A|A"],
     "F": ["AAA", "AF-", "A|A"],
     ".": ["AAA", "A.A", "AAA"],
-    "S": ["AAA", "AS-", "A|A"],
+    "S": ["AAA", "-SA", "A|A"],
 }
-
-for rowNum, row in enumerate(lines):
-    paddedMaze += ["", "", ""]
-    for col in row:
-        padding = paddingConversion[col]
-        for index, new in enumerate(padding):
-            paddedMaze[rowNum*3 + index] += new
-
-for i in paddedMaze:
-    print(i)
-
 
 conversion = {
     # (north, east, south, west)
@@ -35,39 +27,55 @@ conversion = {
     "7": (0, 0, 1, 1),
     "F": (0, 1, 1, 0),
     ".": (0, 0, 0, 0),
-    "S": (1, 1, 1, 1)
+    "S": (1, 1, 1, 1),
+    "A": (0, 0, 0, 0),
+    "B": (0, 0, 0, 0)
 }
-lines = [[conversion[char] for char in line] for line in lines]
-points = set()
+
+for rowNum, row in enumerate(lines):
+    paddedMaze += [list(), list(), list()]
+    for col in row:
+        padding = paddingConversion[col]
+        for index, new in enumerate(padding):
+            paddedMaze[rowNum*3 + index] += new
+
+paddedMaze = [["B", *x, "B"] for x in paddedMaze]
+paddedMaze.insert(0, "B"*len(paddedMaze[0]))
+paddedMaze.append("B"*len(paddedMaze[0]))
+
 
 def checkOpenings(currentLocation):
-    ownOpenings = lines[currentLocation[0]][currentLocation[1]]
-    if currentLocation[0] > 0 and lines[currentLocation[0]-1][currentLocation[1]][2] and ownOpenings[0]:
+    ownOpenings = conversion[paddedMaze[currentLocation[0]][currentLocation[1]]]
+    if currentLocation[0] > 0 and conversion[paddedMaze[currentLocation[0]-1][currentLocation[1]]][2] and ownOpenings[0]:
         # go north
         if (currentLocation[0]-1, currentLocation[1]) not in path:
             return (currentLocation[0]-1, currentLocation[1])
-    if currentLocation[1] < len(lines[0])-1 and lines[currentLocation[0]][currentLocation[1]+1][3] and ownOpenings[1]:
+    if currentLocation[1] < len(paddedMaze[0])-1 and conversion[paddedMaze[currentLocation[0]][currentLocation[1]+1]][3] and ownOpenings[1]:
         # go east
         if (currentLocation[0], currentLocation[1]+1) not in path:
             return (currentLocation[0], currentLocation[1]+1)
-    if currentLocation[0] < len(lines)-1 and lines[currentLocation[0]+1][currentLocation[1]][0] and ownOpenings[2]:
+    if currentLocation[0] < len(paddedMaze)-1 and conversion[paddedMaze[currentLocation[0]+1][currentLocation[1]]][0] and ownOpenings[2]:
         # go south
         if (currentLocation[0]+1, currentLocation[1]) not in path:
             return (currentLocation[0]+1, currentLocation[1])
-    if currentLocation[1] > 0 and lines[currentLocation[0]][currentLocation[1]-1][1] and ownOpenings[3]:
+    if currentLocation[1] > 0 and conversion[paddedMaze[currentLocation[0]][currentLocation[1]-1]][1] and ownOpenings[3]:
         # go west
         if (currentLocation[0], currentLocation[1]-1) not in path:
             return (currentLocation[0], currentLocation[1]-1)
     return originalLocation
 
+originalLocation = next((index, x.index('S')) for index, x in enumerate(paddedMaze) if "S" in x)
+currentLocation = originalLocation
 
 count = 0
 found = False
 path = []
+print("path")
 
 while not found:
     path.append(currentLocation)
     newLocation = checkOpenings(currentLocation)
+    paddedMaze[currentLocation[0]][currentLocation[1]] = 'B'
     currentLocation = newLocation
 
     count += 1
@@ -77,11 +85,22 @@ while not found:
 
 
 def floodFill(location):
-    if location[0] not in range(0, len(lines[0])-1) or location[1] not in range(0,len(lines)-1) or lines[currentLocation[0]][currentLocation[1]] == 'B':
+    currentChar = paddedMaze[location[0]][location[1]]
+    if currentChar == 'B':
         return
-    lines[currentLocation[0]][currentLocation[1]] = 'B'
+
+    paddedMaze[location[0]][location[1]] = 'B'
     newLocations = [(x+location[0], y+location[1]) for x in range(-1,2) for y in range(-1,2)]
     for x in newLocations:
         floodFill(x)
-print(floodFill((0,0)))
-print(count / 2)
+
+print("floodfill")
+floodFill((1,1))
+
+
+for i in paddedMaze:
+    print("".join(i))
+
+points = sum([len([y for y in x if y == '.']) for x in paddedMaze])
+rest = sum([len([y for y in x if y not in ['A', 'B', '.']]) for x in paddedMaze])
+print(points + rest/3)
