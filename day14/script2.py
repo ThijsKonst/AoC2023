@@ -43,7 +43,7 @@ def cycle(roundRocks, fixedRocks):
 
 visitedRocks = {}
 iteration = 0
-while iteration <= 1000000000:
+while iteration < 1000000000:
     roundRocks, fixedRocks = cycle(roundRocks, fixedRocks)
     roundRocks = tuple(sorted(roundRocks))
     iteration += 1
