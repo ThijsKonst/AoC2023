@@ -3,10 +3,10 @@ lines = [(x.split()[0], int(x.split()[1]), x.split()[2][1:-1])
 
 current = (0, 0)
 convert = {
-    "U": (-1, 0),
-    "D": (1, 0),
-    "L": (0, -1),
-    "R": (0, 1),
+    0: (0, 1),
+    1: (1, 0),
+    2: (0, -1),
+    3: (-1, 0),
 }
 coords = []
 
@@ -35,12 +35,15 @@ def normalize(coords):
     return [(x-rowLowerBound, y-colLowerBound) for x, y in coords]
 
 corners = []
+total = 0
 for direction, amount, color in lines:
-    mutation = convert[direction]
-    for amount in range(amount):
-        coords.append(current)
-        current = tuple(map(sum, zip(current, mutation)))
+    amount, direction = int(color[1:-1], 16), int(color[-1])
+    total += amount
+
+    mutation = (amount * convert[direction][0], amount * convert[direction][1])
+    
+    current = tuple(map(sum, zip(current, mutation)))
     corners.append(current)
 
 corners = normalize(corners)
-print(moveThrough(corners) + len(coords)/2 +1)
+print(moveThrough(corners) + total/2 +1)
